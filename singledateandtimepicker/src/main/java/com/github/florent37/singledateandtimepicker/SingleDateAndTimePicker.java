@@ -95,6 +95,8 @@ public class SingleDateAndTimePicker extends LinearLayout {
 
     private boolean isAmPm;
 
+    private boolean globalCyclic = IS_CYCLIC_DEFAULT;
+
     public SingleDateAndTimePicker(Context context) {
         this(context, null);
     }
@@ -253,6 +255,11 @@ public class SingleDateAndTimePicker extends LinearLayout {
     public void setDisplayYears(boolean displayYears) {
         this.displayYears = displayYears;
         yearsPicker.setVisibility(displayYears ? VISIBLE : GONE);
+        yearsPicker.setCyclic(shouldYearPickerBeCyclic());
+
+        if (displayYears) {
+            setMinYear();
+        }
     }
 
     public void setDisplayMonths(boolean displayMonths) {
@@ -325,8 +332,10 @@ public class SingleDateAndTimePicker extends LinearLayout {
     }
 
     public void setCyclic(boolean cyclic) {
+        this.globalCyclic = cyclic;
         for (WheelPicker picker : pickers) {
-            picker.setCyclic(cyclic);
+            final boolean applyCyclic = picker == yearsPicker ? shouldYearPickerBeCyclic() : cyclic;
+            picker.setCyclic(applyCyclic);
         }
     }
 
@@ -424,6 +433,14 @@ public class SingleDateAndTimePicker extends LinearLayout {
         calendar.setTime(maxDate);
         this.maxDate = calendar.getTime();
         setMinYear();
+    }
+
+    private boolean shouldYearPickerBeCyclic() {
+        return !hasYearBounds() && globalCyclic;
+    }
+
+    private boolean hasYearBounds() {
+        return displayYears && (minDate != null || maxDate != null);
     }
 
     public void setCustomLocale(Locale locale) {
@@ -599,15 +616,39 @@ public class SingleDateAndTimePicker extends LinearLayout {
     }
 
     private void setMinYear() {
-
-        if (displayYears && this.minDate != null && this.maxDate != null) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeZone(dateHelper.getTimeZone());
-            calendar.setTime(this.minDate);
-            yearsPicker.setMinYear(calendar.get(Calendar.YEAR));
-            calendar.setTime(this.maxDate);
-            yearsPicker.setMaxYear(calendar.get(Calendar.YEAR));
+        if (!displayYears) {
+            return;
         }
+
+        final Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(dateHelper.getTimeZone());
+
+        Integer minYearValue = null;
+        Integer maxYearValue = null;
+
+        if (this.minDate != null) {
+            calendar.setTime(this.minDate);
+            minYearValue = calendar.get(Calendar.YEAR);
+        }
+
+        if (this.maxDate != null) {
+            calendar.setTime(this.maxDate);
+            maxYearValue = calendar.get(Calendar.YEAR);
+        }
+
+        if (minYearValue != null && maxYearValue != null && minYearValue > maxYearValue) {
+            minYearValue = maxYearValue;
+        }
+
+        if (minYearValue != null) {
+            yearsPicker.setMinYear(minYearValue);
+        }
+
+        if (maxYearValue != null) {
+            yearsPicker.setMaxYear(maxYearValue);
+        }
+
+        yearsPicker.setCyclic(shouldYearPickerBeCyclic());
     }
 
     private void checkSettings() {
