@@ -599,14 +599,36 @@ public class SingleDateAndTimePicker extends LinearLayout {
     }
 
     private void setMinYear() {
+        if (!displayYears) {
+            return;
+        }
 
-        if (displayYears && this.minDate != null && this.maxDate != null) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeZone(dateHelper.getTimeZone());
+        final Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(dateHelper.getTimeZone());
+
+        Integer minYearValue = null;
+        Integer maxYearValue = null;
+
+        if (this.minDate != null) {
             calendar.setTime(this.minDate);
-            yearsPicker.setMinYear(calendar.get(Calendar.YEAR));
+            minYearValue = calendar.get(Calendar.YEAR);
+        }
+
+        if (this.maxDate != null) {
             calendar.setTime(this.maxDate);
-            yearsPicker.setMaxYear(calendar.get(Calendar.YEAR));
+            maxYearValue = calendar.get(Calendar.YEAR);
+        }
+
+        if (minYearValue != null && maxYearValue != null && minYearValue > maxYearValue) {
+            minYearValue = maxYearValue;
+        }
+
+        if (minYearValue != null) {
+            yearsPicker.setMinYear(minYearValue);
+        }
+
+        if (maxYearValue != null) {
+            yearsPicker.setMaxYear(maxYearValue);
         }
     }
 
